@@ -4,7 +4,7 @@ Esse projeto tem como objetivo desenvolver um controlador de portão automático
 
 ## Autores:
 - Igor Mateus Lisboa Souza - https://github.com/lisboaigor
-- João Gustavo Oliveira de Carvalho - 
+- João Gustavo Oliveira de Carvalho - https://github.com/jhongustavo00
 
 ## Professor Orientador: 
 - Bruno Otávio Piedade Prado
