@@ -7,7 +7,7 @@ Esse projeto tem como objetivo desenvolver um controlador de portão automático
 - João Gustavo Oliveira de Carvalho - https://github.com/jhongustavo00
 
 ## Professor Orientador: 
-- Bruno Otávio Piedade Prado
+- Bruno Otávio Piedade Prado - https://github.com/bruno-prado
 
 ## Lista de tarefas:
 - [ ] Conectar a uma rede Wifi
