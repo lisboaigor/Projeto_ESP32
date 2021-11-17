@@ -15,15 +15,8 @@
 #define CONFIG_ESP_WIFI_PASSWORD "***********" // Senha
 #define CONFIG_ESP_MAXIMUM_RETRY 10
 
-// Sinalizador de evento de conexão
-static EventGroupHandle_t s_wifi_event_group;
-
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
-
-static const char *TAG = "Controle de porta - WIFI: ";
-
-static int s_retry_num = 0;
 
 static void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data);
