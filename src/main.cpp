@@ -6,59 +6,50 @@
 
 #include "wifiConfig.h"
 
-/* Definições do Telegram */
-#define TIME_MSG_CHECK 250 //ms
-
-/* Token de acesso Telegram */
+// Definições do Telegram
 #define telegram_token ""
+#define TIME_MSG_CHECK 1000 // Checa se há mensagens a cada 1 segundo
 
-/* Definições das mensagens possíveis de serem recebidas */
+// Definições das mensagens possíveis de serem recebidas
 #define OPEN_GATE_CMD  "ABRIR"
 #define CLOSE_GATE_CMD "FECHAR"
-#define LOCK_GATE_CMD  "TRAVAR ABERTA"
 
 // Status do portão
 bool status;
-bool locked_status;
 
-// Resposta do Bot
-String bot_answer;
-unsigned long last_message_index;
+// Variáveis do usadas pelo bot
+String msg, id;
+unsigned long last_bot_time; // Horario da ultima mensagem enviada
+unsigned long msg_amount; // Quantidade de mensagens recebidas
 
+// Configuração do bot com o cliente WIFI
 WiFiClientSecure client;
 UniversalTelegramBot bot(telegram_token, client);
 
-bool WiFiConnect()
+void WiFiConnect()
 {
-    uint8_t i = 0;
-
     while (WiFi.status() != WL_CONNECTED)
     {
-        delay(500);
-
-        if ((++i % 16) == 0)
-            Serial.println("Tentando conectar...");
+        delay(1000);
+        Serial.println("Tentando estabelecer conexão...");
     }
 
     Serial.print(F("Conexão estabelecida!"));
     Serial.println(WiFi.localIP());
-
-    return true;
 }
 
 void wifi_init()
 {
-    Serial.println("-------CONTROLE_PORTAO-------");
-    Serial.print("Conectando-se a rede:");
+    Serial.println("-------CONTROLE PORTÃO-------");
+    Serial.print("Conectando-se à rede:");
     Serial.println(SSID);
-    Serial.println("Aguarde...");
 
     WiFiConnect();
 }
 
-void openGate()
+void openGate(String id)
 {
-    for (unsigned i = 0; i < 10; i++)
+    for (unsigned i = 0; i < 6; i++)
     {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(500);
@@ -66,12 +57,13 @@ void openGate()
         delay(500);
     }
 
-    status = true;   
+    status = true;
+    bot.sendMessage(id, "Portão aberto!");
 }
 
-void closeGate()
+void closeGate(String id)
 {
-    for (unsigned i = 0; i < 10; i++)
+    for (unsigned i = 0; i < 12; i++)
     {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(250);
@@ -80,48 +72,48 @@ void closeGate()
     }
 
     status = false;
+    bot.sendMessage(id, "Portão fechado!");
 }
 
-void get_signal() {
-    if (WiFi.status() == WL_CONNECTED)
-        bot.getUpdates(bot.last_message_received + 1);
-    else
-        WiFiConnect();
-}
-
-void decode_message(String msg)
+void read_messages()
 {
-    if (msg.equals(OPEN_GATE_CMD) && status == false) 
+    msg_amount = bot.getUpdates(bot.last_message_received + 1);
+
+    for (unsigned long i = 0; i < msg_amount; i++)
     {
-        openGate();
-        
-        for (unsigned i = 0; i < 15; i++)
-        {
-            get_signal();
-            decode_message(bot.messages[bot.getUpdates(bot.last_message_received)].text);
-            delay(1000);
-        }
+        id = bot.messages[i].chat_id;
+        msg = bot.messages[i].text;
+        msg.toUpperCase();
 
-        if (status == true && locked_status == false)
-            closeGate();
+        if (msg.equals(OPEN_GATE_CMD) && status == false)
+            openGate(id);
+        else if (msg.equals(OPEN_GATE_CMD) && status == true)
+            bot.sendMessage(id, "O portão já está aberto!");
+        else if (msg.equals(CLOSE_GATE_CMD) && status == true)
+            closeGate(id);
+        else if (msg.equals(CLOSE_GATE_CMD) && status == false)
+            bot.sendMessage(id, "O portão já está fechado!");
+        else
+            bot.sendMessage(id, "Comando inválido!");
     }
-    else if (msg.equals(CLOSE_GATE_CMD) && status == true) 
-        closeGate();
-
-    else if (msg.equals(LOCK_GATE_CMD) && status == true && locked_status == false)
-        locked_status = true;
 }
 
 void setup()
 {
     Serial.begin(9600);
     pinMode(LED_BUILTIN, OUTPUT);
-    
+
+    msg_amount = 0;
     wifi_init();
 }
 
 void loop()
 {
-    get_signal();
-    decode_message(bot.messages[bot.getUpdates(bot.last_message_received)].text);
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        if (millis() > last_bot_time + TIME_MSG_CHECK) {
+            read_messages();
+            last_bot_time = millis();
+        }
+    }
 }
