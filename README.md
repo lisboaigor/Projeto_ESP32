@@ -11,6 +11,5 @@ Esse projeto tem como objetivo desenvolver um controlador de portão automático
 
 ## Lista de tarefas:
 - [X] Conectar a uma rede Wifi
-- [ ] Hostear uma rede Wifi
 - [ ] Implementar bot do telegram
-- [ ] Implementar controle de portão 
+- [X] Implementar controle de portão 
