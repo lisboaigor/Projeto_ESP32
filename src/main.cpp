@@ -7,11 +7,11 @@
 #include "wifiConfig.h"
 
 // Definições do Telegram
-#define telegram_token ""
+#define telegram_token "2103501476:AAGVqUHNVZ8r1xIIp2-uc07p0PDlMHDalg0"
 #define TIME_MSG_CHECK 1000 // Checa se há mensagens a cada 1 segundo
 
 // Definições das mensagens possíveis de serem recebidas
-#define OPEN_GATE_CMD  "ABRIR"
+#define OPEN_GATE_CMD "ABRIR"
 #define CLOSE_GATE_CMD "FECHAR"
 
 // Status do portão
@@ -19,8 +19,8 @@ bool status;
 
 // Variáveis do usadas pelo bot
 String msg, id;
-unsigned long last_bot_time; // Horario da ultima mensagem enviada
-unsigned long msg_amount; // Quantidade de mensagens recebidas
+unsigned long bot_last_time; // Horario da ultima mensagem enviada
+unsigned long msg_amount;    // Quantidade de mensagens recebidas
 
 // Configuração do bot com o cliente WIFI
 WiFiClientSecure client;
@@ -28,18 +28,28 @@ UniversalTelegramBot bot(telegram_token, client);
 
 void WiFiConnect()
 {
-    while (WiFi.status() != WL_CONNECTED)
+
+    while (WiFi.status() != WL_DISCONNECTED)
     {
         delay(1000);
         Serial.println("Tentando estabelecer conexão...");
+        WiFi.begin(SSID, WiFiPassword);
     }
 
-    Serial.print(F("Conexão estabelecida!"));
+    Serial.println(F("Conexão estabelecida!"));
+    Serial.print("Endereço IP: ");
     Serial.println(WiFi.localIP());
 }
 
 void wifi_init()
 {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, WiFiPassword);
+
+    #ifdef ESP32
+        client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+    #endif
+
     Serial.println("-------CONTROLE PORTÃO-------");
     Serial.print("Conectando-se à rede:");
     Serial.println(SSID);
@@ -109,11 +119,16 @@ void setup()
 
 void loop()
 {
-    if (WiFi.status() == WL_CONNECTED)
+    if (millis() - bot_last_time > TIME_MSG_CHECK)
     {
-        if (millis() > last_bot_time + TIME_MSG_CHECK) {
+        msg_amount = bot.getUpdates(bot.last_message_received + 1);
+
+        while (msg_amount)
+        {
             read_messages();
-            last_bot_time = millis();
+            msg_amount = bot.getUpdates(bot.last_message_received + 1);
         }
+
+        bot_last_time = millis();
     }
 }
