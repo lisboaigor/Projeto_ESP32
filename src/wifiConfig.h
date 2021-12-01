@@ -1,2 +1,2 @@
-const char *SSID = "INTELBRAS";
-const char *WiFiPassword = "gatopreto";
+const char *ssid     = "INTELBRAS";
+const char *password = "gatopreto";
