@@ -13,11 +13,9 @@
 // Definições das mensagens possíveis de serem recebidas
 #define OPEN_GATE_CMD  "/abrir"
 #define CLOSE_GATE_CMD "/fechar"
-#define STOP_GATE_CMD  "/parar"
 
 // Status do portão
-uint8_t status;
-uint8_t engine_loops;
+bool status;
 
 // Variáveis do usadas pelo bot
 String msg, id;
@@ -25,13 +23,13 @@ uint32_t bot_last_time; // Horario da ultima mensagem enviada
 
 // Configuração do bot com o cliente WIFI
 WiFiClientSecure client;
+
 UniversalTelegramBot bot(telegram_token, client);
 
 void setupWiFi()
 {
     WiFi.begin(ssid, password);
     client.setCACert(TELEGRAM_CERTIFICATE_ROOT);
-
     Serial.println("-------CONTROLE PORTÃO-------");
     Serial.print("Conectando-se à rede:");
     Serial.println(ssid);
@@ -46,31 +44,11 @@ void setupWiFi()
     Serial.println(WiFi.localIP());
 }
 
-bool getStopCmd(uint32_t *msg_amount) 
-{
-    *msg_amount = bot.getUpdates(bot.last_message_received + 1);
-
-    for (uint32_t i = 0; i < *msg_amount; i++)
-    {
-        id  = bot.messages[i].chat_id;
-        msg = bot.messages[i].text;
-
-        if (msg.equals(STOP_GATE_CMD) && status == false) 
-        {
-            status = 0;
-            bot.sendMessage(id, "Portão parado.");
-
-            return true;
-        }
-    }
-    return false;
-}
-
 void openGate(String id, uint32_t *msg_amount)
 {
     bot.sendMessage(id, "Abrindo o portão...");
     
-    for (uint8_t i = engine_loops; i <= 12; i++)
+    for (uint8_t i = 0; i <= 12; i++)
     {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(500);
@@ -78,21 +56,16 @@ void openGate(String id, uint32_t *msg_amount)
         digitalWrite(LED_BUILTIN, LOW);
         delay(500);
         Serial.println("LED OFF");
-
-        engine_loops++;
-
-        if (getStopCmd(msg_amount))
-            return;
     }
 
-    status = 1;
+    status = true;
     bot.sendMessage(id, "Portão aberto!");
 }
 
 void closeGate(String id, uint32_t *msg_amount)
 {
     bot.sendMessage(id, "Fechando o portão...");
-    for (uint8_t i = engine_loops; i >= 0; i--)
+    for (uint8_t i = 24; i >= 0; i--)
     {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(250);
@@ -100,14 +73,9 @@ void closeGate(String id, uint32_t *msg_amount)
         digitalWrite(LED_BUILTIN, LOW);
         delay(250);
         Serial.println("LED OFF");
-
-        engine_loops++;
-
-        if (getStopCmd(msg_amount))
-            return;
     }
 
-    status = -1;
+    status = false;
     bot.sendMessage(id, "Portão fechado!");
 }
 
@@ -136,8 +104,7 @@ void setup()
     Serial.begin(115200);
     pinMode(LED_BUILTIN, OUTPUT);
     
-    status = -1;
-    engine_loops = 0;
+    status = false;
 
     setupWiFi();
 }
