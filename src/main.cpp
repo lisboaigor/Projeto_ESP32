@@ -48,7 +48,7 @@ void openGate(String id, uint32_t *msg_amount)
 {
     bot.sendMessage(id, "Abrindo o portão...");
     
-    for (uint8_t i = 0; i <= 12; i++)
+    for (uint8_t i = 0; i <= 5; i++)
     {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(500);
@@ -65,7 +65,7 @@ void openGate(String id, uint32_t *msg_amount)
 void closeGate(String id, uint32_t *msg_amount)
 {
     bot.sendMessage(id, "Fechando o portão...");
-    for (uint8_t i = 24; i >= 0; i--)
+    for (uint8_t i = 0; i <= 10; i--)
     {
         digitalWrite(LED_BUILTIN, HIGH);
         delay(250);
